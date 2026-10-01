@@ -1,0 +1,6 @@
+/wincare-tray
+/wincare-tray.exe
+/bin/
+frontend/node_modules/
+frontend/dist/*
+!frontend/dist/.gitkeep

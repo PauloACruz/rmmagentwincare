@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=WinCare
+Comment=Atendimento WinCare: abra chamados e converse com o técnico
+Exec=/usr/bin/wincare-tray --hidden
+Icon=wincare-tray
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
+NoDisplay=false

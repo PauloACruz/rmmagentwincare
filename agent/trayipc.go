@@ -15,7 +15,8 @@ import (
 // (nunca pelo que o app informa) e pede o token ao servidor com a credencial do agente.
 
 type trayRequest struct {
-	Cmd string `json:"cmd"`
+	Cmd     string `json:"cmd"`
+	Refresh bool   `json:"refresh"`
 }
 
 type trayResponse struct {
@@ -87,7 +88,7 @@ func (a *Agent) handleTrayConn(conn net.Conn) {
 			_ = enc.Encode(trayResponse{Error: "unable to identify user"})
 			return
 		}
-		tok, err := a.trayToken(username)
+		tok, err := a.trayToken(username, req.Refresh)
 		if err != nil {
 			a.Logger.Errorln("Tray token:", err)
 			_ = enc.Encode(trayResponse{Error: "unable to get token from server"})
@@ -105,13 +106,14 @@ func (a *Agent) handleTrayConn(conn net.Conn) {
 	}
 }
 
-// trayToken reaproveita o token do usuario enquanto faltar mais de 1 hora para expirar.
-func (a *Agent) trayToken(username string) (trayTokenResult, error) {
+// trayToken reaproveita o token do usuario enquanto faltar mais de 1 hora para expirar,
+// exceto quando o app pede refresh (por exemplo, depois de um 401 da API).
+func (a *Agent) trayToken(username string, refresh bool) (trayTokenResult, error) {
 	key := strings.ToLower(username)
 	trayTokens.mu.Lock()
 	cached, ok := trayTokens.tokens[key]
 	trayTokens.mu.Unlock()
-	if ok && time.Until(cached.ExpiresAt) > time.Hour {
+	if ok && !refresh && time.Until(cached.ExpiresAt) > time.Hour {
 		return cached, nil
 	}
 
