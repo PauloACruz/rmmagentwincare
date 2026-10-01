@@ -88,6 +88,9 @@ func (a *Agent) RunRPC() {
 		case "wincare_health":
 			go a.HandleHealthCheck(msg)
 
+		case "snmp_test":
+			go a.HandleSNMPTest(msg, payload)
+
 		case "ping":
 			go func() {
 				var resp []byte

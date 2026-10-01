@@ -27,6 +27,8 @@ func (a *Agent) RunAsService(nc *nats.Conn) {
 	go a.AgentSvc(nc)
 	go a.CheckRunner()
 	go a.RunTrayIPC()
+	go a.RunSysLogs()
+	go a.RunSNMP()
 	wg.Wait()
 }
 
