@@ -1,0 +1,178 @@
+{
+  "version": "2.12.0",
+  "modules": [
+    {
+      "key": "maintenance",
+      "label": "Manutenção do sistema",
+      "description": "Manutenção corretiva e preventiva: integridade do sistema, rede, limpeza, disco, inicialização e serviços.",
+      "platforms": ["windows", "linux", "darwin"],
+      "tasks": [
+        {"key": "sfc", "label": "Verificar e reparar arquivos de sistema (SFC /scannow)", "group": "Integridade do sistema", "description": "Executa sfc /scannow para verificar e reparar arquivos protegidos do Windows. Pode demorar alguns minutos.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "dism_check", "label": "Verificar a saúde da imagem do Windows (DISM CheckHealth)", "group": "Integridade do sistema", "description": "Executa DISM /Online /Cleanup-Image /CheckHealth.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "dism_restore", "label": "Restaurar a saúde da imagem do Windows (DISM RestoreHealth)", "group": "Integridade do sistema", "description": "Executa DISM /Online /Cleanup-Image /RestoreHealth. Requer internet e pode demorar. Cria ponto de restauração antes.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "winsock_reset", "label": "Redefinir Winsock e TCP/IP", "group": "Rede", "description": "Executa netsh winsock reset, netsh int ip reset e ipconfig /flushdns. Exige reinicialização. Cria ponto de restauração antes.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": true, "dangerous": true, "params": []},
+        {"key": "net_adapter_reset", "label": "Reiniciar adaptadores de rede", "group": "Rede", "description": "Desativa e reativa todos os adaptadores de rede. A conexão da máquina cai por alguns segundos.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "dns_flush", "label": "Limpar cache DNS", "group": "Rede", "description": "Linux: resolvectl flush-caches (ou systemd-resolve --flush-caches). macOS: dscacheutil -flushcache e killall -HUP mDNSResponder.", "default": true, "platforms": ["linux", "darwin"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "temp_files", "label": "Limpar arquivos temporários", "group": "Limpeza", "description": "Windows: pasta Temp de cada perfil de usuário, C:\\Windows\\Temp e C:\\Windows\\Prefetch. Linux e macOS: arquivos em /tmp com mais de 7 dias.", "default": true, "platforms": ["windows", "linux", "darwin"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "recycle_bin", "label": "Esvaziar a Lixeira", "group": "Limpeza", "description": "Esvazia a Lixeira de todas as unidades.", "default": false, "platforms": ["windows"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "windows_logs", "label": "Analisar logs antigos do Windows (mais de 30 dias)", "group": "Limpeza", "description": "Conta os eventos com mais de 30 dias nos logs Application, System, Security e Setup. Apenas relata, não apaga (comportamento original).", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "soft_distrib", "label": "Limpar cache do Windows Update (SoftwareDistribution)", "group": "Limpeza", "description": "Para wuauserv e BITS, apaga C:\\Windows\\SoftwareDistribution\\Download e reinicia os serviços.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "package_cache", "label": "Limpar cache do gerenciador de pacotes", "group": "Limpeza", "description": "Usa o que existir na máquina: apt-get clean, dnf clean all, yum clean all, zypper clean --all ou brew cleanup.", "default": true, "platforms": ["linux", "darwin"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "journal_vacuum", "label": "Reduzir logs do journald (manter 7 dias)", "group": "Limpeza", "description": "Executa journalctl --vacuum-time=7d.", "default": true, "platforms": ["linux"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "disk_cleanup", "label": "Limpeza de Disco (cleanmgr /sagerun)", "group": "Disco", "description": "Marca todas as categorias da Limpeza de Disco e executa cleanmgr /sagerun:64 sem interface.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "defrag", "label": "Otimizar ou desfragmentar o disco C:", "group": "Disco", "description": "Em SSD executa TRIM (defrag C: /L); em HDD desfragmenta (defrag C: /U /V), o que pode demorar.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "chkdsk_schedule", "label": "Agendar CHKDSK na próxima reinicialização", "group": "Disco", "description": "Agenda chkdsk C: /f /r /x para o próximo boot. A verificação pode levar horas. Cria ponto de restauração antes.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": true, "dangerous": true, "params": []},
+        {"key": "disk_space", "label": "Verificar espaço livre e inodes", "group": "Disco", "description": "Lista uso de espaço e de inodes por sistema de arquivos e avisa acima de 90%.", "default": true, "platforms": ["linux", "darwin"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "bcd_repair", "label": "Reparar dados de inicialização (BCD)", "group": "Inicialização", "description": "Exporta backup do BCD e executa bootrec /fixmbr, /fixboot, /scanos e /rebuildbcd. Operação crítica; o bootrec costuma existir apenas no WinRE. Cria ponto de restauração antes.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": true, "dangerous": true, "params": []},
+        {"key": "critical_services", "label": "Verificar e restaurar serviços críticos do Windows", "group": "Serviços", "description": "Verifica Windows Update, BITS, Serviços de Criptografia, Windows Installer, Trusted Installer, WMI, Log de Eventos e Spooler de Impressão e inicia os que estiverem parados.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []}
+      ]
+    },
+    {
+      "key": "windows_update",
+      "label": "Windows Update",
+      "description": "Instala todas as atualizações em várias rodadas até o sistema ficar atualizado.",
+      "platforms": ["windows"],
+      "tasks": [
+        {"key": "check_pending", "label": "Verificar atualizações pendentes", "group": "Verificação", "description": "Consulta a API do Windows Update e devolve a lista de atualizações pendentes.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "history", "label": "Histórico das últimas atualizações", "group": "Verificação", "description": "Devolve as 15 entradas mais recentes do histórico do Windows Update.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "defender_signatures", "label": "Atualizar assinaturas do Windows Defender", "group": "Atualizações", "description": "Executa Update-MpSignature.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "store_apps", "label": "Atualizar apps da Microsoft Store (winget)", "group": "Atualizações", "description": "Executa winget upgrade --source msstore --all. Exige winget instalado.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "install_updates", "label": "Instalar atualizações do Windows", "group": "Atualizações", "description": "Instala as atualizações pendentes via PSWindowsUpdate ou pela API nativa do Windows Update.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": true, "dangerous": false, "params": [
+          {"name": "recursive", "label": "Modo recursivo: repetir até zerar as pendências (máx. 5 rodadas)", "type": "bool", "default": true, "required": false},
+          {"name": "drivers", "label": "Incluir atualizações de drivers", "type": "bool", "default": false, "required": false},
+          {"name": "auto_reboot", "label": "Reiniciar automaticamente ao concluir (em 60 segundos)", "type": "bool", "default": false, "required": false}
+        ]}
+      ]
+    },
+    {
+      "key": "bug_fixer",
+      "label": "Correção de bugs",
+      "description": "Corrige os bugs e inconsistências mais comuns do Windows sem reinstalação.",
+      "platforms": ["windows"],
+      "tasks": [
+        {"key": "wmi_repair", "label": "Reparar repositório WMI (winmgmt /resetrepository)", "group": "WMI e serviços", "description": "Para o serviço WMI, redefine o repositório e inicia o serviço novamente.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "rpc_check", "label": "Verificar e reiniciar RPC, DCOM e dependências críticas", "group": "WMI e serviços", "description": "Verifica RpcSs, DcomLaunch e RpcEptMapper e inicia os que estiverem parados.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "event_log_clear", "label": "Limpar os logs de eventos Application e System", "group": "WMI e serviços", "description": "Apaga todas as entradas dos logs Application e System.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "store_reset", "label": "Redefinir a Microsoft Store e o cache (wsreset.exe)", "group": "Store e UWP", "description": "Executa wsreset.exe na sessão do usuário conectado.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "uwp_reregister", "label": "Registrar novamente todos os apps UWP do sistema", "group": "Store e UWP", "description": "Executa Add-AppxPackage -Register para cada pacote instalado.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "dotnet_versions", "label": "Verificar e listar versões do .NET instaladas", "group": ".NET e runtimes", "description": "Lista as versões do .NET Framework encontradas no registro.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "vcredist", "label": "Verificar Visual C++ Redistributables instalados", "group": ".NET e runtimes", "description": "Lista os pacotes Visual C++ Redistributable instalados.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "gpupdate", "label": "Reaplicar Políticas de Grupo (gpupdate /force)", "group": "Políticas", "description": "Executa gpupdate /force.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "temp_permissions", "label": "Corrigir permissões das pastas temporárias", "group": "Políticas", "description": "Executa icacls /reset /t /c /q em C:\\Windows\\Temp e na pasta Temp de cada perfil de usuário.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "thumbnail_cache", "label": "Reconstruir cache de miniaturas do Explorer", "group": "Cache do sistema", "description": "Encerra o Explorer, apaga thumbcache_*.db de cada perfil e o Explorer é reiniciado na sessão do usuário.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "icon_cache", "label": "Reparar o cache de ícones", "group": "Cache do sistema", "description": "Apaga IconCache.db e iconcache_*.db de cada perfil e executa ie4uinit -ClearIconCache. Reinício recomendado.", "default": true, "platforms": ["windows"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "font_cache", "label": "Limpar o cache de fontes do Windows (FontCache)", "group": "Cache do sistema", "description": "Para o serviço FontCache, apaga o cache e inicia o serviço novamente.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "dns_flush", "label": "Limpar o cache DNS e redefinir NetBIOS", "group": "Cache do sistema", "description": "Executa ipconfig /flushdns e nbtstat -RR.", "default": true, "platforms": ["windows"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "search_restart", "label": "Reiniciar o Windows Search (indexador)", "group": "Funcionalidades", "description": "Para e inicia o serviço WSearch.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "explorer_restart", "label": "Reiniciar o Windows Explorer", "group": "Funcionalidades", "description": "Encerra o Explorer; ele volta a abrir na sessão do usuário.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []}
+      ]
+    },
+    {
+      "key": "office",
+      "label": "Office, Teams, OneDrive e SharePoint",
+      "description": "Reparo do Office, limpeza de cache do Teams e manutenção do OneDrive e do SharePoint. Ações de usuário são aplicadas a todos os perfis da máquina.",
+      "platforms": ["windows"],
+      "tasks": [
+        {"key": "office_repair", "label": "Reparar o Office (reparo online, OfficeC2RClient)", "group": "Microsoft Office", "description": "Executa o reparo online do Office Click-to-Run sem interface.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "office_quick_repair", "label": "Reparo rápido do Office (offline)", "group": "Microsoft Office", "description": "Executa o reparo rápido do Office Click-to-Run sem interface.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "office_activation", "label": "Verificar a ativação do Office (ospp.vbs)", "group": "Microsoft Office", "description": "Executa cscript ospp.vbs /dstatus.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "office_credentials", "label": "Redefinir credenciais e tokens MSAL do Office", "group": "Microsoft Office", "description": "Apaga Licensing, Identity e IdentityCache de cada perfil e remove credenciais do Office do cofre. O usuário precisará entrar novamente.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "office_cache", "label": "Limpar o cache do Office (Word, Excel, Outlook, PowerPoint)", "group": "Microsoft Office", "description": "Apaga OfficeFileCache, OTelemetry e Lync\\Tracing de cada perfil.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "teams_classic_cache", "label": "Limpar o cache do Teams clássico", "group": "Microsoft Teams", "description": "Encerra o Teams e apaga as pastas de cache do Teams clássico de cada perfil.", "default": true, "platforms": ["windows"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "teams_new_cache", "label": "Limpar o cache do novo Teams", "group": "Microsoft Teams", "description": "Encerra o novo Teams e apaga o cache MSTeams_8wekyb3d8bbwe de cada perfil.", "default": true, "platforms": ["windows"], "selfService": true, "reboot": false, "dangerous": false, "params": []},
+        {"key": "teams_reregister", "label": "Registrar novamente o Teams", "group": "Microsoft Teams", "description": "Executa Add-AppxPackage -Register para os pacotes MSTeams.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "onedrive_cache", "label": "Limpar o cache local do OneDrive (logs e temporários)", "group": "Microsoft OneDrive", "description": "Apaga as pastas de logs do OneDrive de cada perfil.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "onedrive_reset", "label": "Redefinir o OneDrive por completo", "group": "Microsoft OneDrive", "description": "Executa OneDrive.exe /reset na sessão do usuário conectado; o OneDrive desconecta e sincroniza novamente.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "onedrive_reinstall", "label": "Reinstalar o OneDrive", "group": "Microsoft OneDrive", "description": "Desinstala e instala o OneDrive com OneDriveSetup.exe na sessão do usuário conectado.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "sharepoint_cache", "label": "Limpar o cache de sincronização do SharePoint", "group": "SharePoint Online", "description": "Apaga AppData\\Local\\Microsoft\\SharePoint de cada perfil.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "sharepoint_resync", "label": "Forçar nova sincronização das bibliotecas", "group": "SharePoint Online", "description": "Encerra o OneDrive e abre novamente na sessão do usuário conectado.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "sharepoint_clear_libraries", "label": "Remover atalhos de bibliotecas do SharePoint", "group": "SharePoint Online", "description": "Remove os pontos de nova análise (atalhos) nas pastas OneDrive de cada perfil.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []}
+      ]
+    },
+    {
+      "key": "registry",
+      "label": "Registro do Windows",
+      "description": "Correção e limpeza do Registro. Um backup (HKLM e perfis carregados em HKU) é feito antes de qualquer alteração em %ProgramData%\\WinCare\\backups.",
+      "platforms": ["windows"],
+      "tasks": [
+        {"key": "backup", "label": "Fazer backup completo do Registro agora", "group": "Backup", "description": "Exporta HKLM e os perfis de usuário carregados (HKU) com reg export.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "startup_invalid", "label": "Remover entradas Run inválidas (caminho inexistente)", "group": "Inicialização", "description": "Remove valores de Run (HKLM e cada usuário) que apontam para executáveis inexistentes.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "runonce_clear", "label": "Limpar RunOnce residual de instaladores", "group": "Inicialização", "description": "Remove os valores de RunOnce (HKLM e cada usuário).", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "missing_services", "label": "Detectar referências a drivers e serviços ausentes", "group": "Inicialização", "description": "Relata serviços e drivers cujo ImagePath não existe. Apenas relata, não remove (comportamento original).", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "orphan_software", "label": "Detectar chaves órfãs de software desinstalado", "group": "Software desinstalado", "description": "Relata entradas de desinstalação cujo desinstalador não existe mais.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "muicache", "label": "Limpar MUICache (histórico de programas executados)", "group": "Software desinstalado", "description": "Apaga a chave MuiCache de cada usuário.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "appcompat", "label": "Limpar AppCompatFlags residuais de apps removidos", "group": "Software desinstalado", "description": "Remove do Compatibility Assistant Store os caminhos que não existem mais.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "file_associations", "label": "Verificar associações de arquivo", "group": "Associações e shell", "description": "Relata as associações de .txt, .html, .pdf, .docx, .xlsx, .jpg e .mp4.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "shell_extensions", "label": "Listar extensões de shell aprovadas", "group": "Associações e shell", "description": "Lista as extensões de shell aprovadas. A remoção continua manual (comportamento original).", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": []},
+        {"key": "open_with", "label": "Verificar listas Abrir com", "group": "Associações e shell", "description": "Lista as primeiras 20 extensões em FileExts de cada usuário.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "prefetch", "label": "Otimizar chaves de Prefetch e Superfetch", "group": "Desempenho", "description": "Define EnablePrefetcher e EnableSuperfetch com o valor 3.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "start_menu_search", "label": "Verificar o cache de pesquisa do Menu Iniciar", "group": "Desempenho", "description": "Verifica a chave Search de cada usuário.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "recent_docs", "label": "Limpar a lista de documentos recentes", "group": "Privacidade", "description": "Remove os valores de RecentDocs de cada usuário.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "run_mru", "label": "Limpar o histórico da caixa Executar (Win+R)", "group": "Privacidade", "description": "Remove os valores de RunMRU de cada usuário.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []}
+      ]
+    },
+    {
+      "key": "app_remover",
+      "label": "Desinstalador de aplicativos",
+      "description": "Lista os aplicativos instalados (Win32 e Store) e remove os escolhidos com limpeza de resíduos.",
+      "platforms": ["windows"],
+      "tasks": [
+        {"key": "list", "label": "Listar aplicativos instalados", "group": "Aplicativos", "description": "Devolve um evento result com nome, tipo, versão e fabricante de cada aplicativo.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "list_bloatware", "label": "Listar bloatware encontrado", "group": "Aplicativos", "description": "Devolve um evento result com os aplicativos que correspondem à lista de bloatware conhecida.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "uninstall", "label": "Desinstalar aplicativos", "group": "Aplicativos", "description": "Desinstala os aplicativos informados (nomes exatos como aparecem na lista).", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": true, "params": [
+          {"name": "apps", "label": "Aplicativos (nomes separados por vírgula)", "type": "string", "required": true},
+          {"name": "clean_folders", "label": "Limpar pastas residuais em AppData, LocalAppData e ProgramData", "type": "bool", "default": true, "required": false},
+          {"name": "timeout_minutes", "label": "Tempo máximo por aplicativo (minutos)", "type": "number", "default": 15, "required": false}
+        ]}
+      ]
+    },
+    {
+      "key": "component_test",
+      "label": "Testes de componentes",
+      "description": "Testes de hardware e componentes: processador, memória, armazenamento, vídeo, rede e bateria.",
+      "platforms": ["windows", "linux", "darwin"],
+      "tasks": [
+        {"key": "cpu_info", "label": "Informações do processador", "group": "Processador", "description": "Modelo, núcleos, cache, clock e carga.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "cpu_bench", "label": "Benchmark de CPU (tempo de cálculo)", "group": "Processador", "description": "Windows: cálculo de 100.000 números primos. Linux e macOS: contagem de primos até 200.000 com awk. Devolve o tempo em um evento result.", "default": false, "platforms": ["windows", "linux", "darwin"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "cpu_stress", "label": "Teste de estresse rápido da CPU (5 s)", "group": "Processador", "description": "Ocupa todos os núcleos por 5 segundos para detectar limitação térmica.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "ram_info", "label": "Informações e memória disponível", "group": "Memória RAM", "description": "Windows: slots, velocidade, fabricante e memória disponível. Linux e macOS: memória total e disponível.", "default": true, "platforms": ["windows", "linux", "darwin"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "ram_usage", "label": "Processos com maior uso de memória (10 maiores)", "group": "Memória RAM", "description": "Lista os 10 processos com maior uso de memória.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "ram_test", "label": "Agendar diagnóstico de memória do Windows", "group": "Memória RAM", "description": "Agenda o Diagnóstico de Memória do Windows (mdsched) para a próxima reinicialização.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": true, "dangerous": false, "params": []},
+        {"key": "disk_info", "label": "Informações dos discos e volumes", "group": "Armazenamento", "description": "Modelo, capacidade e interface dos discos e espaço livre dos volumes.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "disk_speed", "label": "Velocidade de leitura e escrita do disco", "group": "Armazenamento", "description": "Escrita e leitura sequencial com arquivo temporário removido no final (Windows: 100 MB; Linux e macOS: 256 MB em /var/tmp).", "default": true, "platforms": ["windows", "linux", "darwin"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "disk_smart", "label": "Status S.M.A.R.T. dos discos", "group": "Armazenamento", "description": "Consulta MSStorageDriver_FailurePredictStatus via WMI.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "gpu_info", "label": "Informações da GPU", "group": "GPU e vídeo", "description": "Modelo, VRAM, resolução e driver.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "dxdiag", "label": "Exportar relatório do DirectX (dxdiag /t)", "group": "GPU e vídeo", "description": "Salva o relatório em %ProgramData%\\WinCare\\reports.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "net_ping", "label": "Teste de conectividade (ping e DNS)", "group": "Rede", "description": "Ping para 8.8.8.8, 1.1.1.1, google.com e cloudflare.com e resolução de nomes.", "default": true, "platforms": ["windows", "linux", "darwin"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "net_trace", "label": "Traceroute para 8.8.8.8", "group": "Rede", "description": "Executa tracert -h 10 8.8.8.8.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "net_adapters", "label": "Listar adaptadores de rede e endereços IP", "group": "Rede", "description": "Nome, status, velocidade e IPv4 de cada adaptador.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "net_speed", "label": "Teste de velocidade de internet (Cloudflare)", "group": "Rede", "description": "Baixa 25 MB de speed.cloudflare.com e mede a taxa de download.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "battery", "label": "Relatório de saúde da bateria", "group": "Bateria", "description": "Executa powercfg /batteryreport e salva em %ProgramData%\\WinCare\\reports.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "power_efficiency", "label": "Relatório de eficiência energética (10 s)", "group": "Bateria", "description": "Executa powercfg /energy por 10 segundos e salva em %ProgramData%\\WinCare\\reports.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []}
+      ]
+    },
+    {
+      "key": "winget",
+      "label": "Winget",
+      "description": "Busca, instalação e atualização de aplicativos com o winget.",
+      "platforms": ["windows"],
+      "tasks": [
+        {"key": "search", "label": "Buscar aplicativos", "group": "Buscar e instalar", "description": "Executa winget search e devolve os resultados em um evento result.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": [
+          {"name": "query", "label": "Termo de busca", "type": "string", "required": true}
+        ]},
+        {"key": "install", "label": "Instalar aplicativos", "group": "Buscar e instalar", "description": "Instala os pacotes informados pelo ID do winget (ex.: Google.Chrome, 7zip.7zip).", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": [
+          {"name": "ids", "label": "IDs dos pacotes (separados por vírgula)", "type": "string", "required": true},
+          {"name": "silent", "label": "Instalação silenciosa", "type": "bool", "default": true, "required": false}
+        ]},
+        {"key": "list_upgrades", "label": "Listar aplicativos desatualizados", "group": "Atualização", "description": "Executa winget upgrade e devolve a lista em um evento result.", "default": true, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "upgrade_all", "label": "Atualizar todos os aplicativos", "group": "Atualização", "description": "Executa winget upgrade --all.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": [
+          {"name": "include_unknown", "label": "Incluir pacotes com versão desconhecida", "type": "bool", "default": true, "required": false}
+        ]},
+        {"key": "export", "label": "Exportar lista de aplicativos (JSON)", "group": "Exportar e importar", "description": "Executa winget export, salva em %ProgramData%\\WinCare\\reports e devolve o conteúdo em um evento result.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": []},
+        {"key": "import", "label": "Importar lista e instalar", "group": "Exportar e importar", "description": "Executa winget import com um arquivo JSON já presente na máquina.", "default": false, "platforms": ["windows"], "selfService": false, "reboot": false, "dangerous": false, "params": [
+          {"name": "path", "label": "Caminho do arquivo JSON na máquina", "type": "string", "required": true}
+        ]}
+      ]
+    }
+  ]
+}

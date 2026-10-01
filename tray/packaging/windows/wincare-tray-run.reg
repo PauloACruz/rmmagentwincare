@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; Inicia o WinCare na bandeja em toda sessao de usuario (todas as contas da maquina).
+; Ajuste o caminho se o executavel for instalado em outra pasta.
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run]
+"WinCareTray"="\"C:\\Program Files\\WinCare\\wincare-tray.exe\" --hidden"
