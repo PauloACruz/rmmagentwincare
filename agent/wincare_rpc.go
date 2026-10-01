@@ -13,11 +13,6 @@ func respondString(msg *nats.Msg, value string) {
 	_ = msg.Respond(resp)
 }
 
-// HandleWinCareRPC atende wincare_catalog, wincare_run e wincare_cancel (implementacao em wincare_runner.go).
-func (a *Agent) HandleWinCareRPC(nc *nats.Conn, msg *nats.Msg, p *NatsMsg) {
-	respondString(msg, "error: not implemented")
-}
-
 // HandleHealthRPC atende wincare_health (implementacao em health.go).
 func (a *Agent) HandleHealthRPC(msg *nats.Msg) {
 	respondString(msg, "error: not implemented")
