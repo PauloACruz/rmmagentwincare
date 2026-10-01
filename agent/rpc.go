@@ -86,7 +86,7 @@ func (a *Agent) RunRPC() {
 			go a.HandleWinCareRPC(nc, msg, payload)
 
 		case "wincare_health":
-			go a.HandleHealthRPC(msg)
+			go a.HandleHealthCheck(msg)
 
 		case "ping":
 			go func() {

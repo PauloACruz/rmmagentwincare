@@ -558,6 +558,10 @@ func (a *Agent) GetWMIInfo() map[string]interface{} {
 		} else {
 			wmiInfo["serialnumber"] = baseboard.SerialNumber
 		}
+		// O numero de serie do produto e o da etiqueta do equipamento; a placa-mae fica como alternativa.
+		if b, err := os.ReadFile("/sys/class/dmi/id/product_serial"); err == nil && strings.TrimSpace(string(b)) != "" {
+			wmiInfo["serialnumber"] = strings.TrimSpace(string(b))
+		}
 	case "darwin":
 		opts := a.NewCMDOpts()
 		serialCmd := `ioreg -l | grep IOPlatformSerialNumber | grep -o '"IOPlatformSerialNumber" = "[^"]*"' | awk -F'"' '{print $4}'`
