@@ -15,12 +15,12 @@ wc_dir_kb() {
 }
 
 task_temp_files() {
-	wc_log INFO "Removendo arquivos de /tmp com mais de 7 dias..."
+	wc_log INFO "Removendo arquivos de /tmp sem uso ha mais de 7 dias (modificacao, acesso e metadados)..."
 	local root=/tmp/ files dirs
 	# -delete trabalha relativo ao diretório já aberto, sem seguir links trocados durante a varredura.
-	files=$(find "$root" -xdev -mindepth 1 -type f -mtime +7 -print -delete 2>/dev/null | wc -l | tr -d ' ')
+	files=$(find "$root" -xdev -mindepth 1 -path "${root}systemd-private-*" -prune -o -type f -mtime +7 -ctime +7 -atime +7 -print -delete 2>/dev/null | wc -l | tr -d ' ')
 	wc_progress 70
-	dirs=$(find "$root" -xdev -mindepth 1 -type d -empty -mtime +7 -print -delete 2>/dev/null | wc -l | tr -d ' ')
+	dirs=$(find "$root" -xdev -mindepth 1 -path "${root}systemd-private-*" -prune -o -type d -empty -mtime +7 -ctime +7 -print -delete 2>/dev/null | wc -l | tr -d ' ')
 	wc_log SUCCESS "Removidos: $files arquivo(s) e $dirs pasta(s) vazia(s) antigas em /tmp"
 	wc_result "\"files\":$files,\"dirs\":$dirs"
 }
