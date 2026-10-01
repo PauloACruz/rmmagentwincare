@@ -56,3 +56,58 @@ type Upload struct {
 	ContentType string
 	Data        []byte
 }
+
+// Estados finais de uma execucao do autoatendimento (WinCareRunStatus no servidor).
+const (
+	RunRunning   = "running"
+	RunOK        = "ok"
+	RunWarning   = "warning"
+	RunError     = "error"
+	RunCancelled = "cancelled"
+	RunTimeout   = "timeout"
+)
+
+// IsFinalRunStatus diz se a execucao ja terminou.
+func IsFinalRunStatus(status string) bool {
+	switch status {
+	case RunOK, RunWarning, RunError, RunCancelled, RunTimeout:
+		return true
+	}
+	return false
+}
+
+// SelfServiceTask e uma acao liberada pelo tecnico para o usuario executar sozinho.
+type SelfServiceTask struct {
+	Module      string `json:"module"`
+	Key         string `json:"key"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
+}
+
+// SelfServiceOptions e a resposta de GET /api/tray/self-service.
+type SelfServiceOptions struct {
+	Enabled bool              `json:"enabled"`
+	Tasks   []SelfServiceTask `json:"tasks"`
+}
+
+// SelfServiceStart e a resposta 202 de POST /api/tray/self-service/run.
+type SelfServiceStart struct {
+	RunID string `json:"runId"`
+}
+
+// SelfServiceRun e o estado de uma execucao (GET /api/tray/self-service/runs/{runId}).
+type SelfServiceRun struct {
+	RunID    string   `json:"runId"`
+	Status   string   `json:"status"`
+	Progress int      `json:"progress"`
+	Label    string   `json:"label"`
+	Messages []string `json:"messages"`
+}
+
+// SelfServiceChange e o argumento do evento selfServiceChanged do hub.
+type SelfServiceChange struct {
+	RunID    string `json:"runId"`
+	Status   string `json:"status"`
+	Progress int    `json:"progress"`
+	Message  string `json:"message"`
+}

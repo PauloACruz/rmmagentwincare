@@ -4,6 +4,11 @@ import type {
   CreateResult,
   Message,
   NavigateEvent,
+  SelfServiceEvent,
+  SelfServiceOptions,
+  SelfServiceRun,
+  SelfServiceStart,
+  SelfServiceTask,
   SessionInfo,
   Ticket,
   TicketDetail,
@@ -37,4 +42,14 @@ export const wailsBackend: Backend = {
   onConnection: (cb) => on('tray:connection', (d) => { cb((d as { realtime: boolean }).realtime); }),
   onNavigate: (cb) => on('tray:navigate', (d) => { cb(d as NavigateEvent); }),
   onRefresh: (cb) => on('tray:refresh', () => { cb(); }),
+  selfServiceOptions: async () => {
+    const o = (await call('SelfServiceOptions')) as Omit<SelfServiceOptions, 'tasks'> & { tasks: SelfServiceTask[] | null };
+    return { enabled: o.enabled, tasks: o.tasks ?? [] };
+  },
+  runSelfService: (module, key) => call('RunSelfService', module, key) as Promise<SelfServiceStart>,
+  selfServiceRun: async (runId) => {
+    const r = (await call('SelfServiceRun', runId)) as Omit<SelfServiceRun, 'messages'> & { messages: string[] | null };
+    return { ...r, messages: r.messages ?? [] };
+  },
+  onSelfService: (cb) => on('tray:selfService', (d) => { cb(d as SelfServiceEvent); }),
 };

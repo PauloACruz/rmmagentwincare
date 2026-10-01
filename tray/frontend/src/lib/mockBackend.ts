@@ -1,4 +1,14 @@
-import type { Backend, Message, Ticket, TicketDetail, TicketMessageEvent } from './types';
+import type {
+  Backend,
+  Message,
+  RunStatus,
+  SelfServiceEvent,
+  SelfServiceRun,
+  SelfServiceTask,
+  Ticket,
+  TicketDetail,
+  TicketMessageEvent,
+} from './types';
 
 // Simulador usado com "npm run dev:mock" para desenvolver e validar a interface fora do Wails.
 type Listener<T> = (data: T) => void;
@@ -6,6 +16,34 @@ type Listener<T> = (data: T) => void;
 const now = () => new Date().toISOString();
 const msgListeners = new Set<Listener<TicketMessageEvent>>();
 const changeListeners = new Set<Listener<Ticket>>();
+const selfServiceListeners = new Set<Listener<SelfServiceEvent>>();
+
+const selfServiceTasks: SelfServiceTask[] = [
+  { module: 'cleanup', key: 'temp', label: 'Limpar arquivos temporários', description: 'Apaga arquivos temporários e libera espaço em disco.' },
+  { module: 'network', key: 'reset', label: 'Corrigir conexão de rede', description: 'Renova o endereço IP e limpa o cache de DNS.' },
+  { module: 'printer', key: 'spooler', label: 'Reiniciar fila de impressão', description: 'Reinicia o serviço de impressão e limpa documentos travados.' },
+];
+const selfServiceRuns = new Map<string, SelfServiceRun>();
+let selfServiceBusy = false;
+
+// Simula uma execucao: a rede termina com erro para exibir o botao "Abrir chamado".
+function simulateRun(run: SelfServiceRun, final: RunStatus) {
+  const steps = ['Preparando', 'Executando a ação', 'Conferindo o resultado', 'Finalizando'];
+  let i = 0;
+  const timer = setInterval(() => {
+    i++;
+    const done = i > steps.length;
+    run.progress = done ? 100 : i * 22;
+    run.status = done ? final : 'running';
+    const message = done ? (final === 'ok' ? 'Tudo certo.' : 'Não foi possível concluir a ação.') : (steps[i - 1] ?? '');
+    run.messages.push(message);
+    selfServiceListeners.forEach((l) => { l({ runId: run.runId, status: run.status, progress: run.progress, message }); });
+    if (done) {
+      selfServiceBusy = false;
+      clearInterval(timer);
+    }
+  }, 900);
+}
 
 let nextMessageId = 100;
 const tickets: TicketDetail[] = [
@@ -144,5 +182,32 @@ export const mockBackend: Backend = {
   },
   onRefresh() {
     return () => undefined;
+  },
+  async selfServiceOptions() {
+    await delay(150);
+    return { enabled: true, tasks: [...selfServiceTasks] };
+  },
+  async runSelfService(module, key) {
+    await delay(300);
+    const task = selfServiceTasks.find((t) => t.module === module && t.key === key);
+    if (!task) throw new Error('Esta ação não está liberada pelo suporte.');
+    if (selfServiceBusy || module === 'printer') {
+      throw new Error('Já existe uma manutenção em andamento neste computador. Tente novamente em alguns minutos.');
+    }
+    selfServiceBusy = true;
+    const run: SelfServiceRun = { runId: `run-${String(Date.now())}`, status: 'running', progress: 0, label: `${module}.${key}`, messages: [] };
+    selfServiceRuns.set(run.runId, run);
+    simulateRun(run, module === 'network' ? 'error' : 'ok');
+    return { runId: run.runId };
+  },
+  async selfServiceRun(runId) {
+    await delay(100);
+    const run = selfServiceRuns.get(runId);
+    if (!run) throw new Error('Execução não encontrada.');
+    return { ...run, messages: [...run.messages] };
+  },
+  onSelfService(cb) {
+    selfServiceListeners.add(cb);
+    return () => { selfServiceListeners.delete(cb); };
   },
 };

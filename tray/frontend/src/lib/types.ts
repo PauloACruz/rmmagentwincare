@@ -61,6 +61,40 @@ export interface NavigateEvent {
   id: number;
 }
 
+export type RunStatus = 'running' | 'ok' | 'warning' | 'error' | 'cancelled' | 'timeout';
+
+export interface SelfServiceTask {
+  module: string;
+  key: string;
+  label: string;
+  description: string;
+}
+
+export interface SelfServiceOptions {
+  enabled: boolean;
+  tasks: SelfServiceTask[];
+}
+
+export interface SelfServiceStart {
+  runId: string;
+}
+
+export interface SelfServiceRun {
+  runId: string;
+  status: RunStatus;
+  progress: number;
+  label: string;
+  messages: string[];
+}
+
+/** Payload de tray:selfService (evento selfServiceChanged do hub). */
+export interface SelfServiceEvent {
+  runId: string;
+  status: RunStatus;
+  progress: number;
+  message: string;
+}
+
 export type Unsubscribe = () => void;
 
 /** Contrato entre a interface e o processo Go (ou o simulador usado no desenvolvimento). */
@@ -76,4 +110,8 @@ export interface Backend {
   onConnection(cb: (realtime: boolean) => void): Unsubscribe;
   onNavigate(cb: (e: NavigateEvent) => void): Unsubscribe;
   onRefresh(cb: () => void): Unsubscribe;
+  selfServiceOptions(): Promise<SelfServiceOptions>;
+  runSelfService(module: string, key: string): Promise<SelfServiceStart>;
+  selfServiceRun(runId: string): Promise<SelfServiceRun>;
+  onSelfService(cb: (e: SelfServiceEvent) => void): Unsubscribe;
 }

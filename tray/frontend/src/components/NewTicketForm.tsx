@@ -3,11 +3,13 @@ import { useState, type SyntheticEvent } from 'react';
 interface Props {
   onSubmit: (title: string, description: string, includeScreenshot: boolean) => Promise<void>;
   onCancel: () => void;
+  initialTitle?: string;
+  initialDescription?: string;
 }
 
-export function NewTicketForm({ onSubmit, onCancel }: Props) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+export function NewTicketForm({ onSubmit, onCancel, initialTitle = '', initialDescription = '' }: Props) {
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
   const [screenshot, setScreenshot] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');

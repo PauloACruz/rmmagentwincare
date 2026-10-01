@@ -24,6 +24,7 @@ const HubPath = "/hubs/tray"
 type Handler interface {
 	TicketMessage(ticketID int, msg api.Message)
 	TicketChanged(ticket api.Ticket)
+	SelfServiceChanged(change api.SelfServiceChange)
 	ConnectionChanged(connected bool)
 }
 
@@ -229,5 +230,32 @@ func (c *Client) dispatch(msg Message) {
 			return
 		}
 		c.Handler.TicketChanged(t)
+	case "selfServiceChanged":
+		change, err := ParseSelfServiceChanged(msg.Arguments)
+		if err != nil {
+			c.logf("realtime: %v", err)
+			return
+		}
+		c.Handler.SelfServiceChanged(change)
 	}
+}
+
+// ParseSelfServiceChanged decodifica os argumentos de selfServiceChanged({ runId, status, progress, message }).
+func ParseSelfServiceChanged(args []json.RawMessage) (api.SelfServiceChange, error) {
+	if len(args) < 1 {
+		return api.SelfServiceChange{}, errors.New("selfServiceChanged sem argumentos")
+	}
+	var change api.SelfServiceChange
+	if err := json.Unmarshal(args[0], &change); err != nil {
+		return api.SelfServiceChange{}, fmt.Errorf("selfServiceChanged invalido: %w", err)
+	}
+	if change.RunID == "" || change.Status == "" {
+		return api.SelfServiceChange{}, errors.New("selfServiceChanged sem runId ou status")
+	}
+	if change.Progress < 0 {
+		change.Progress = 0
+	} else if change.Progress > 100 {
+		change.Progress = 100
+	}
+	return change, nil
 }

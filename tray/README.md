@@ -36,6 +36,7 @@ sequenceDiagram
 |---|---|
 | `main.go` | Janela, bandeja, instância única, notificações |
 | `service.go` | `TrayService`, o serviço chamado pela interface |
+| `selfservice.go` | Métodos do autoatendimento e notificação ao fim da execução |
 | `capture.go`, `notifier.go` | Captura de tela e notificações do sistema |
 | `internal/ipc` | Cliente do canal local (um arquivo por sistema) e renovação do token |
 | `internal/api` | Cliente HTTP das rotas `/api/tray/*` e tipos |
@@ -57,8 +58,15 @@ Chamados por `Call.ByName("main.TrayService.<Método>")` de `@wailsio/runtime` (
 | `SendMessage(ticketId, body)` | `TrayMessage` |
 | `Attachment(ticketId, attachmentId)` | data URL base64 da imagem |
 | `CaptureScreenPreview()` | data URL da captura (opcional, a interface atual não usa) |
+| `SelfServiceOptions()` | `{ enabled, tasks: [{ module, key, label, description }] }` |
+| `RunSelfService(module, key)` | `{ runId }` (403 e 409 `AGENT_BUSY` viram mensagens amigáveis) |
+| `SelfServiceRun(runId)` | `{ runId, status, progress, label, messages }` |
 
-Eventos emitidos: `tray:ticketMessage` `{ ticketId, message }`, `tray:ticketChanged` (TrayTicket), `tray:connection` `{ realtime }`, `tray:navigate` `{ view, id }`, `tray:refresh`.
+Eventos emitidos: `tray:ticketMessage` `{ ticketId, message }`, `tray:ticketChanged` (TrayTicket), `tray:connection` `{ realtime }`, `tray:navigate` `{ view, id }`, `tray:refresh`, `tray:selfService` `{ runId, status, progress, message }` (evento `selfServiceChanged` do hub).
+
+### Resolver sozinho (autoatendimento)
+
+A aba "Resolver sozinho" aparece quando o técnico libera o autoatendimento (`enabled`). O usuário escolhe uma ação, confirma e acompanha a barra de progresso e a última mensagem em tempo real (com consulta de segurança a cada 10 s enquanto a execução estiver em andamento). Ao terminar, o app mostra o resultado (Concluído, Concluído com avisos, Falhou, Cancelado, Tempo esgotado), envia uma notificação do sistema e, se a ação não resolveu, oferece "Abrir chamado" com título e descrição sugeridos.
 
 ## Requisitos
 

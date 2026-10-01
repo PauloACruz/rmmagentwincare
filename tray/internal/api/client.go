@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -212,4 +213,36 @@ func (c *Client) Attachment(ctx context.Context, ticketID int, attachmentID int6
 		contentType = contentType[:i]
 	}
 	return data, strings.TrimSpace(contentType), nil
+}
+
+// SelfServiceOptions devolve se o autoatendimento esta liberado e quais acoes o usuario pode executar.
+func (c *Client) SelfServiceOptions(ctx context.Context) (SelfServiceOptions, error) {
+	var o SelfServiceOptions
+	err := c.do(ctx, http.MethodGet, "/api/tray/self-service", nil, &o)
+	if o.Tasks == nil {
+		o.Tasks = []SelfServiceTask{}
+	}
+	return o, err
+}
+
+// RunSelfService inicia uma acao liberada. A API devolve 403 se ela nao estiver liberada e
+// 409 AGENT_BUSY se ja houver uma manutencao em andamento.
+func (c *Client) RunSelfService(ctx context.Context, module, key string) (SelfServiceStart, error) {
+	payload, err := json.Marshal(map[string]string{"module": module, "key": key})
+	if err != nil {
+		return SelfServiceStart{}, err
+	}
+	var s SelfServiceStart
+	err = c.do(ctx, http.MethodPost, "/api/tray/self-service/run", &requestBody{contentType: "application/json", data: payload}, &s)
+	return s, err
+}
+
+// SelfServiceRun devolve o estado de uma execucao iniciada por este usuario.
+func (c *Client) SelfServiceRun(ctx context.Context, runID string) (SelfServiceRun, error) {
+	var r SelfServiceRun
+	err := c.do(ctx, http.MethodGet, "/api/tray/self-service/runs/"+url.PathEscape(runID), nil, &r)
+	if r.Messages == nil {
+		r.Messages = []string{}
+	}
+	return r, err
 }

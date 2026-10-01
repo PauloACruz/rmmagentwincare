@@ -21,11 +21,12 @@ func (s staticTokens) Credentials(context.Context, bool) (ipc.Credentials, error
 }
 
 type recorder struct {
-	mu       sync.Mutex
-	messages []int
-	changed  []string
-	conn     []bool
-	done     chan struct{}
+	mu          sync.Mutex
+	messages    []int
+	changed     []string
+	conn        []bool
+	selfService []api.SelfServiceChange
+	done        chan struct{}
 }
 
 func (r *recorder) TicketMessage(id int, m api.Message) {
@@ -42,6 +43,12 @@ func (r *recorder) TicketChanged(t api.Ticket) {
 	defer r.mu.Unlock()
 	r.changed = append(r.changed, t.Status)
 	close(r.done)
+}
+
+func (r *recorder) SelfServiceChanged(c api.SelfServiceChange) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.selfService = append(r.selfService, c)
 }
 
 func (r *recorder) ConnectionChanged(c bool) {

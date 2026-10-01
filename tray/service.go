@@ -29,6 +29,7 @@ const (
 	eventConnection    = "tray:connection"
 	eventNavigate      = "tray:navigate"
 	eventRefresh       = "tray:refresh"
+	eventSelfService   = "tray:selfService"
 )
 
 const (
@@ -81,9 +82,12 @@ type TrayService struct {
 	window *application.WebviewWindow
 	ctx    context.Context
 
-	mu       sync.Mutex
-	realtime bool
-	statuses map[int]string
+	mu        sync.Mutex
+	realtime  bool
+	statuses  map[int]string
+	selfRuns  map[string]string // runId -> rotulo da acao, para a notificacao
+	notified  map[string]bool   // execucoes ja avisadas ao terminar
+	selfTasks []api.SelfServiceTask
 }
 
 func newTrayService(insecure bool) *TrayService {
