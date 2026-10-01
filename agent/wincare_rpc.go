@@ -12,8 +12,3 @@ func respondString(msg *nats.Msg, value string) {
 	_ = ret.Encode(value)
 	_ = msg.Respond(resp)
 }
-
-// HandleHealthRPC atende wincare_health (implementacao em health.go).
-func (a *Agent) HandleHealthRPC(msg *nats.Msg) {
-	respondString(msg, "error: not implemented")
-}
