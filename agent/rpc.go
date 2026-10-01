@@ -82,6 +82,12 @@ func (a *Agent) RunRPC() {
 		}
 
 		switch payload.Func {
+		case "wincare_catalog", "wincare_run", "wincare_cancel":
+			go a.HandleWinCareRPC(nc, msg, payload)
+
+		case "wincare_health":
+			go a.HandleHealthRPC(msg)
+
 		case "ping":
 			go func() {
 				var resp []byte
